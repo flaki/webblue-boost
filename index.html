@@ -1,0 +1,58 @@
+<html>
+<head></head>
+<body>
+  <button>BLE me!</button>
+
+<script>
+const LEGO_BOOST_MOVE_HUB_UUID = '00001623-1212-efde-1623-785feabcd123'
+const LEGO_BOOST_MOVE_HUB_CHAR = '00001624-1212-efde-1623-785feabcd123'
+
+document.querySelector('button').addEventListener('click', event => {
+  console.log('Requesting Bluetooth Device...');
+
+  navigator.bluetooth.requestDevice({ filters: [
+    { services: [ LEGO_BOOST_MOVE_HUB_UUID ] },
+    //{ name: 'LEGO Move Hub' }
+  ]})
+  .then(device => {
+    console.log(device)
+    return device.gatt.connect()
+  })
+
+  .then(connection => {
+    console.log(connection)
+
+    const device = window.movehub = connection.device
+
+    console.log('> Name:             ' + device.name)
+    console.log('> Id:               ' + device.id)
+    console.log('> Connected:        ' + device.gatt.connected)
+
+    return connection.getPrimaryServices()
+  })
+
+  .then(primaryServices => {
+    console.log(primaryServices)
+
+    return primaryServices[0]
+  })
+
+  .then(service => {
+    window.movehubservice = service
+
+    return service.getCharacteristic(LEGO_BOOST_MOVE_HUB_CHAR)
+  })
+
+  // Eye roll time!
+  .then(movehub => {
+    movehub.writeValue(new Uint8Array([0x0e, 0x00, 0x81, 0x02, 0x11, 0x0b, 0x68, 0x01, 0x00, 0x00, 0x9b, 0x64, 0x7f, 0x03]))
+  })
+
+
+  .catch(error => {
+    console.log('Argh! ' + error);
+  })
+})
+</script>
+</body>
+</html>
